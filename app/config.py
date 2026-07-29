@@ -49,6 +49,10 @@ class Settings(BaseSettings):
     jira_rejected_status: str = Field(
         default="Compra rechazada", validation_alias="JIRA_REJECTED_STATUS"
     )
+    jira_decision_intermediate_status: str | None = Field(
+        default="Autorizacion",
+        validation_alias="JIRA_DECISION_INTERMEDIATE_STATUS",
+    )
     decision_token_ttl_seconds: int = Field(
         default=86400, validation_alias="DECISION_TOKEN_TTL_SECONDS", ge=60
     )
@@ -60,6 +64,11 @@ class Settings(BaseSettings):
     @classmethod
     def strip_url(cls, value: str) -> str:
         return value.rstrip("/")
+
+    @field_validator("jira_decision_intermediate_status", mode="before")
+    @classmethod
+    def empty_intermediate_as_none(cls, value: str | None) -> str | None:
+        return value or None
 
     @property
     def async_database_url(self) -> str:

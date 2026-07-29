@@ -91,7 +91,7 @@ def test_approve_callback_transitions_comments_and_marks_message(client, jira_pa
     assert decision.json()["status"] == "approved"
     client.app.state.jira.get_status.assert_awaited_once_with("SEAL-123")
     client.app.state.jira.transition_to.assert_awaited_once_with(
-        "SEAL-123", "Compra autorizada"
+        "SEAL-123", "Compra autorizada", "Autorizacion"
     )
     client.app.state.jira.add_comment.assert_awaited_once()
     client.app.state.telegram.mark_decided.assert_awaited_once()
@@ -114,7 +114,7 @@ def test_reject_callback_uses_rejected_transition(client, jira_payload):
     )
     assert decision.json()["status"] == "rejected"
     client.app.state.jira.transition_to.assert_awaited_once_with(
-        "SEAL-123", "Compra rechazada"
+        "SEAL-123", "Compra rechazada", "Autorizacion"
     )
 
 

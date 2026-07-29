@@ -92,7 +92,10 @@ Copie `.env.example` a `.env`. No confirme `.env` en Git.
 | `DATABASE_URL` | Local: `sqlite:///./approvals.db`. Railway/PostgreSQL: la URL entregada por el servicio. |
 
 Los nombres de estados y los timeouts pueden ajustarse con las variables
-opcionales incluidas en `.env.example`.
+opcionales incluidas en `.env.example`. Si el workflow exige pasar por un estado
+intermedio antes de aprobar o rechazar, configure
+`JIRA_DECISION_INTERMEDIATE_STATUS`; la aplicación intentará primero una
+transición directa y, si no existe, seguirá esa ruta intermedia.
 
 Para generar secretos en PowerShell sin almacenarlos en el historial:
 

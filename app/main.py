@@ -176,7 +176,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 raise JiraError(
                     f"Issue is no longer in '{cfg.jira_source_status}'"
                 )
-            await request.app.state.jira.transition_to(approval.issue_key, target)
+            await request.app.state.jira.transition_to(
+                approval.issue_key,
+                target,
+                cfg.jira_decision_intermediate_status,
+            )
             timestamp = datetime.now(timezone.utc).isoformat(timespec="seconds")
             verb = "aprobó" if approved else "rechazó"
             await request.app.state.jira.add_comment(

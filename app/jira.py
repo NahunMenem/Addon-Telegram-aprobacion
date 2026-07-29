@@ -109,31 +109,67 @@ class JiraClient:
         except (KeyError, TypeError) as exc:
             raise JiraError("Jira status response is invalid") from exc
 
-    async def transition_to(self, issue_key: str, target_status: str) -> None:
+    async def _available_transitions(
+        self, issue_key: str
+    ) -> list[dict[str, Any]]:
         data = await self._json(
             "GET", f"/rest/api/3/issue/{issue_key}/transitions", params={"expand": "transitions.fields"}
         )
         transitions = data.get("transitions")
         if not isinstance(transitions, list):
             raise JiraError("Jira transitions response is invalid")
-        transition_id = next(
+        return [item for item in transitions if isinstance(item, dict)]
+
+    @staticmethod
+    def _transition_id(
+        transitions: list[dict[str, Any]], target_status: str
+    ) -> str | None:
+        return next(
             (
                 str(item["id"])
                 for item in transitions
-                if isinstance(item, dict)
-                and isinstance(item.get("to"), dict)
+                if isinstance(item.get("to"), dict)
                 and str(item["to"].get("name", "")).casefold()
                 == target_status.casefold()
             ),
             None,
         )
-        if not transition_id:
-            raise JiraError(f"No transition is available to '{target_status}'")
+
+    async def _execute_transition(self, issue_key: str, transition_id: str) -> None:
         await self._json(
             "POST",
             f"/rest/api/3/issue/{issue_key}/transitions",
             json={"transition": {"id": transition_id}},
         )
+
+    async def transition_to(
+        self,
+        issue_key: str,
+        target_status: str,
+        intermediate_status: str | None = None,
+    ) -> None:
+        transitions = await self._available_transitions(issue_key)
+        transition_id = self._transition_id(transitions, target_status)
+        if transition_id:
+            await self._execute_transition(issue_key, transition_id)
+            return
+        if not intermediate_status:
+            raise JiraError(f"No transition is available to '{target_status}'")
+        intermediate_id = self._transition_id(transitions, intermediate_status)
+        if not intermediate_id:
+            raise JiraError(
+                f"No transition is available to intermediate status "
+                f"'{intermediate_status}'"
+            )
+        await self._execute_transition(issue_key, intermediate_id)
+        transitions = await self._available_transitions(issue_key)
+        transition_id = self._transition_id(transitions, target_status)
+        if not transition_id:
+            raise JiraError(
+                f"Intermediate transition completed, but no transition is "
+                f"available to '{target_status}'"
+            )
+        await self._execute_transition(issue_key, transition_id)
 
     async def add_comment(self, issue_key: str, text: str) -> None:
         await self._json(
