@@ -156,8 +156,10 @@ Telegram enviará el secreto en
 ## Despliegue en Railway
 
 1. Cree un proyecto desde este repositorio. Railway detectará el `Dockerfile`.
-2. Agregue un volumen persistente si conservará SQLite y monte una ruta, por
-   ejemplo `/data`; use `DATABASE_URL=sqlite:////data/approvals.db`.
+2. Para una demo puede usar el SQLite predeterminado en
+   `/data/approvals.db`. Su contenido puede perderse al volver a desplegar.
+   Agregue un volumen montado en `/data` si necesita conservarlo; use
+   `DATABASE_URL=sqlite:////data/approvals.db`.
    Para producción se recomienda agregar PostgreSQL y usar la variable de URL
    provista por Railway.
 3. Cargue todas las variables de `.env.example` en **Variables**, sin subir el
